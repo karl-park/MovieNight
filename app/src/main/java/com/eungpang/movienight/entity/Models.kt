@@ -1,6 +1,8 @@
 package com.eungpang.movienight.entity
 
 import android.os.Parcelable
+import com.eungpang.movienight.ui.adapter.AdapterType
+import com.eungpang.movienight.ui.adapter.ViewType
 import kotlinx.android.parcel.Parcelize
 
 @Parcelize
@@ -11,8 +13,9 @@ data class Movie(
     val release_date: String,
     val poster_path: String,
     val overview: String?
-) : Parcelable {
+) : Parcelable, ViewType {
 
+    override fun getViewType(): Int = AdapterType.MOVIE
 }
 
 @Parcelize

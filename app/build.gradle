@@ -62,8 +62,8 @@ dependencies {
 //    implementation "io.reactivex.rxjava2:rxkotlin:$rxkotlin_version"
 //
 //    // Picaso
-//    def picaso_version = "2.5.2"
-//    implementation "com.squareup.picasso:picasso:$picaso_version"
+    def picaso_version = "2.71828"
+    implementation "com.squareup.picasso:picasso:$picaso_version"
 //
 //    // Dagger2
 //    def dagger_version = "2.25.4"
