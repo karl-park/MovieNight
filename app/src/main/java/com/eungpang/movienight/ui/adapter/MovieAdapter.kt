@@ -10,7 +10,7 @@ class MovieAdapter(listener: ViewSelectedListener) : RecyclerView.Adapter<Recycl
 
     private var delegateAdapters = SparseArrayCompat<ItemAdapter>()
 
-    private val loadingItem = object : ViewType { // (3)
+    private val loadingItem = object : ViewType {
         override fun getViewType() = AdapterType.LOADING
     }
 

@@ -27,6 +27,7 @@ fun ImageView.loadingImg(imageUrl: String) {
     }
 }
 
+// TODO: anko 로 대체 할 것.
 fun RecyclerView.snackbar(message: String, duration: Int = Snackbar.LENGTH_SHORT) {
     Snackbar.make(this, message, duration).show()
 }

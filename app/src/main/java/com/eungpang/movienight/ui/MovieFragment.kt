@@ -14,12 +14,16 @@ import com.eungpang.movienight.ui.adapter.MovieAdapter
 import com.eungpang.movienight.ui.adapter.ViewSelectedListener
 import com.eungpang.movienight.utils.inflate
 import com.eungpang.movienight.utils.snackbar
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.fragment_movie.*
 
-class MovieFragment : Fragment() {
+class MovieFragment : RxBaseFragment() {
     private val recyclerView by lazy {
         recycler_view
     }
+
+    private val movieManager by lazy { MovieManager() }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?)
             = container?.inflate(R.layout.fragment_movie)
@@ -47,49 +51,26 @@ class MovieFragment : Fragment() {
         }
 
         if (savedInstanceState == null) {
-            val movieList = mutableListOf<Movie>()
-            for (i in 1..10) {
-                movieList.apply {
-                    add(
-                        Movie(
-                            1234,
-                            5.0f,
-                            "Movie ${(i + 0)}",
-                            "2020-$i-${i + 0}",
-                            "https://picsum.photos/480/640?image=$i", // (3) 외부 인터넷 이미지 리소스
-                            "Movie${i + 0}"
-                        )
-                    )
-
-                    add(
-                        Movie(
-                            1234,
-                            5.0f,
-                            "Movie ${i + 1}",
-                            "2019-$i-${i + 1}",
-                            "https://picsum.photos/480/640?image=$i", // (3) 외부 인터넷 이미지 리소스
-                            "Movie${i + 1}"
-                        )
-                    )
-
-                    add(
-                        Movie(
-                            1234,
-                            5.0f,
-                            "Movie ${i + 2}",
-                            "2018-$i-${i + 2}",
-                            "https://picsum.photos/480/640?image=$i", // (3) 외부 인터넷 이미지 리소스
-                            "Movie${i + 2}"
-                        )
-                    )
-                }
-            }
-
-            (recyclerView.adapter as MovieAdapter).addMovieList(movieList)
+            requestMovie()
         } else {
 
         }
+    }
 
+    private fun requestMovie() {
+        val subscription = movieManager.getMovieList()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe (
+                { retrievedMovie ->
+                    (recyclerView.adapter as MovieAdapter).addMovieList(retrievedMovie)
+                },
+                { e ->
+                    recyclerView.snackbar(e.message ?: "")
+                }
+            )
+
+        subscriptions.add(subscription)
     }
 
     companion object {
