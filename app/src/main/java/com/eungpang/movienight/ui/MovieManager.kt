@@ -1,51 +1,40 @@
 package com.eungpang.movienight.ui
 
+import com.eungpang.movienight.BuildConfig.API_KEY
+import com.eungpang.movienight.api.RetrofitClient
 import com.eungpang.movienight.entity.Movie
 import io.reactivex.Observable
 
 class MovieManager {
     fun getMovieList(): Observable<List<Movie>> {
         return Observable.create { subscriber ->
-            val movieList = mutableListOf<Movie>()
-            for (i in 1..10) {
-                movieList.apply {
-                    add(
-                        Movie(
-                            1234,
-                            5.0f,
-                            "Movie ${(i + 0)}",
-                            "2020-$i-${i + 0}",
-                            "https://picsum.photos/480/640?image=$i",
-                            "Movie${i + 0}"
-                        )
-                    )
+            val response = RetrofitClient.getClient().getMovieListRetrofit(
+                mapOf(
+                    "page" to "1",
+                    "api_key" to API_KEY,
+                    "sort_by" to "popularity.desc",
+                    "language" to "ko"
+                )
+            ).execute()
 
-                    add(
-                        Movie(
-                            1234,
-                            5.0f,
-                            "Movie ${i + 1}",
-                            "2019-$i-${i + 1}",
-                            "https://picsum.photos/480/640?image=$i",
-                            "Movie${i + 1}"
-                        )
-                    )
-
-                    add(
-                        Movie(
-                            1234,
-                            5.0f,
-                            "Movie ${i + 2}",
-                            "2018-$i-${i + 2}",
-                            "https://picsum.photos/480/640?image=$i",
-                            "Movie${i + 2}"
-                        )
+            if (response.isSuccessful) {
+                val movieList = response.body()?.results?.map {
+                    Movie(
+                        it.vote_count,
+                        it.vote_average,
+                        it.title,
+                        it.release_date,
+                        it.poster_path,
+                        it.overview
                     )
                 }
+                if (movieList != null) {
+                    subscriber.onNext(movieList)
+                }
+                subscriber.onComplete()
+            } else {
+                subscriber.onError(Throwable(response.message()))
             }
-
-            subscriber.onNext(movieList)
-            subscriber.onComplete()
         }
     }
 }

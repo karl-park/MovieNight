@@ -29,15 +29,15 @@ class MovieItemAdapter(val listener: ViewSelectedListener) : ItemAdapter {
         private val btnReserve = itemView.btn_reserve
 
         fun bind(item: Movie) {
-            imgPoster.loadingImg(item.poster_path)
+            imgPoster.loadingImg("https://image.tmdb.org/t/p/w500/${item.poster_path}")
             overview.text = item.overview
             releaseDate.text = item.release_date
-            voteCount.text = "${item.vote_count} 투표"
+            voteCount.text = "${item.vote_count} likes!"
             tvTitle.text = item.title
             tvAverage.rating = item.vote_average / 2
 
             itemView.setOnClickListener {
-                listener.onItemSelected(item.poster_path)
+                listener.onItemSelected("https://image.tmdb.org/t/p/w500/${item.poster_path}")
             }
         }
     }

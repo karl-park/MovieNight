@@ -4,6 +4,12 @@ apply plugin: 'kotlin-android'
 
 apply plugin: 'kotlin-android-extensions'
 
+
+def tmdbPropertiesFil = project.file("../tmdb.properties")
+def tmdbProperties = new Properties()
+tmdbProperties.load(new FileInputStream(tmdbPropertiesFil))
+def API_KEY = tmdbProperties['API_KEY']
+
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.2"
@@ -14,12 +20,19 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField "String", "API_KEY", new String ("\"" + API_KEY + "\"")
     }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+    }
+
+    compileOptions {
+        sourceCompatibility 1.8
+        targetCompatibility 1.8
     }
 
     androidExtensions {
@@ -54,12 +67,11 @@ dependencies {
     implementation "io.reactivex.rxjava2:rxjava:$rxjava_version"
     implementation "io.reactivex.rxjava2:rxandroid:$rxandroid_version"
 
-
-//    // Retrofit
-//    def retrofit_version = "2.7.1"
-//    implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
-//    implementation "com.squareup.retrofit2:converter-gson:$retrofit_version"
-//    implementation "com.squareup.retrofit2:adapter-rxjava2:$retrofit_version" // RxJava 2
+    // Retrofit
+    def retrofit_version = "2.7.1"
+    implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
+    implementation "com.squareup.retrofit2:converter-gson:$retrofit_version"
+    implementation "com.squareup.retrofit2:adapter-rxjava2:$retrofit_version"
 //
 //    // Retrofit w/ Coroutine
 //    implementation 'com.jakewharton.retrofit:retrofit2-kotlin-coroutines-adapter:0.9.2'
