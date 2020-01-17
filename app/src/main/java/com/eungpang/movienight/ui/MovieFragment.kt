@@ -6,6 +6,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.eungpang.movienight.BuildConfig
+import com.eungpang.movienight.MyApplication
 import com.eungpang.movienight.R
 import com.eungpang.movienight.entity.MovieList
 import com.eungpang.movienight.ui.adapter.MovieAdapter
@@ -16,13 +18,18 @@ import com.eungpang.movienight.utils.snackbar
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.fragment_movie.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 class MovieFragment : RxBaseFragment() {
     private val recyclerView by lazy {
         recycler_view
     }
 
-    private val movieManager by lazy { MovieManager() }
+    @Inject lateinit var movieManager : MovieManager
+
     private var movieList : MovieList? = null
 
     private val movieAdapter by androidLazy {
@@ -41,6 +48,11 @@ class MovieFragment : RxBaseFragment() {
         }
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        MyApplication.movieComponent.inject(this)
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?)
             = container?.inflate(R.layout.fragment_movie)
 
@@ -54,7 +66,7 @@ class MovieFragment : RxBaseFragment() {
 
             clearOnScrollListeners()
             addOnScrollListener(InfiniteScrollListener({
-                requestMovie()
+                requestMovieWithRxJava()
             }, linearLayoutManager))
 
             if (adapter != null) {
@@ -66,7 +78,7 @@ class MovieFragment : RxBaseFragment() {
 
         // First launch
         if (savedInstanceState == null) {
-            requestMovie()
+            requestMovieWithRxJava()
             return
         }
 
@@ -86,8 +98,8 @@ class MovieFragment : RxBaseFragment() {
         }
     }
 
-    private fun requestMovie() {
-        val subscription = movieManager.getMovieList((movieList?.page).toString())
+    private fun requestMovieWithRxJava() {
+        val subscription = movieManager.getMovieListWithRxJava((movieList?.page).toString())
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe (
@@ -103,12 +115,30 @@ class MovieFragment : RxBaseFragment() {
         subscriptions.add(subscription)
     }
 
+    private fun requestMovieWithCoroutine() {
+        job = GlobalScope.launch(Dispatchers.Main) {
+            try {
+                val param = mapOf(
+                    "page" to movieList?.page.toString(),
+                    "api_key" to BuildConfig.API_KEY,
+                    "sort_by" to "popularity.desc",
+                    "language" to "ko"
+                )
+                val retrievedMovie = movieManager.getMovieListWithCoroutine(param)
+                retrievedMovie.page = retrievedMovie.page?.plus(1)
+
+                movieList = retrievedMovie
+                movieAdapter.addMovieList(retrievedMovie.results)
+            } catch (e: Exception) {
+                recyclerView.snackbar(e.message ?: "")
+            }
+        }
+    }
+
     companion object {
         @JvmStatic
         fun newInstance() = MovieFragment()
 
         const val INTENT_KEY_MOVIE_DATA = "INTENT_KEY_MOVIE_DATA"
-
-
     }
 }

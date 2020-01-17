@@ -1,15 +1,18 @@
 package com.eungpang.movienight.ui
 
 import com.eungpang.movienight.BuildConfig.API_KEY
-import com.eungpang.movienight.api.RetrofitClient
+import com.eungpang.movienight.api.MovieApi
 import com.eungpang.movienight.entity.Movie
 import com.eungpang.movienight.entity.MovieList
 import io.reactivex.Observable
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class MovieManager(private val client: RetrofitClient = RetrofitClient.getClient()) {
-    fun getMovieList(page: String): Observable<MovieList> {
+@Singleton
+class MovieManager @Inject constructor(private val movieApi : MovieApi) {
+    fun getMovieListWithRxJava(page: String): Observable<MovieList> {
         return Observable.create { subscriber ->
-            val response = client.getMovieListRetrofit(
+            val response = movieApi.getMovieListRetrofit(
                 mapOf(
                     "page" to page,
                     "api_key" to API_KEY,
@@ -40,5 +43,20 @@ class MovieManager(private val client: RetrofitClient = RetrofitClient.getClient
                 subscriber.onError(Throwable(response.message()))
             }
         }
+    }
+
+    suspend fun getMovieListWithCoroutine(param: Map<String, String>): MovieList {
+        val response = movieApi.getMovieListRetrofitWithCoroutine(param)
+        val listOfMovie = response.results.map {
+            Movie(
+                it.vote_count,
+                it.vote_average,
+                it.title,
+                it.release_date,
+                it.poster_path,
+                it.overview
+            )
+        }
+        return MovieList(response.page, listOfMovie)
     }
 }
