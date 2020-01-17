@@ -2,14 +2,12 @@ package com.eungpang.movienight.ui
 
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.eungpang.movienight.R
-import com.eungpang.movienight.entity.Movie
+import com.eungpang.movienight.entity.MovieList
 import com.eungpang.movienight.ui.adapter.MovieAdapter
 import com.eungpang.movienight.ui.adapter.ViewSelectedListener
 import com.eungpang.movienight.utils.inflate
@@ -24,6 +22,8 @@ class MovieFragment : RxBaseFragment() {
     }
 
     private val movieManager by lazy { MovieManager() }
+    private var movieList : MovieList? = null
+
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?)
             = container?.inflate(R.layout.fragment_movie)
@@ -33,8 +33,16 @@ class MovieFragment : RxBaseFragment() {
 
         recyclerView.apply {
             setHasFixedSize(true)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                recyclerView.layoutManager = LinearLayoutManager(context)
+            val linearLayoutManager = LinearLayoutManager(context)
+            layoutManager = linearLayoutManager
+
+            clearOnScrollListeners()
+            addOnScrollListener(InfiniteScrollListener({
+                requestMovie()
+            }, linearLayoutManager))
+
+            if (adapter != null) {
+                return@apply
             }
 
             adapter = MovieAdapter(object: ViewSelectedListener {
@@ -58,12 +66,13 @@ class MovieFragment : RxBaseFragment() {
     }
 
     private fun requestMovie() {
-        val subscription = movieManager.getMovieList()
+        val subscription = movieManager.getMovieList((movieList?.page).toString())
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe (
                 { retrievedMovie ->
-                    (recyclerView.adapter as MovieAdapter).addMovieList(retrievedMovie)
+                    movieList = retrievedMovie
+                    (recyclerView.adapter as MovieAdapter).addMovieList(retrievedMovie.results)
                 },
                 { e ->
                     recyclerView.snackbar(e.message ?: "")

@@ -3,14 +3,15 @@ package com.eungpang.movienight.ui
 import com.eungpang.movienight.BuildConfig.API_KEY
 import com.eungpang.movienight.api.RetrofitClient
 import com.eungpang.movienight.entity.Movie
+import com.eungpang.movienight.entity.MovieList
 import io.reactivex.Observable
 
-class MovieManager {
-    fun getMovieList(): Observable<List<Movie>> {
+class MovieManager(private val client: RetrofitClient = RetrofitClient.getClient()) {
+    fun getMovieList(page: String): Observable<MovieList> {
         return Observable.create { subscriber ->
-            val response = RetrofitClient.getClient().getMovieListRetrofit(
+            val response = client.getMovieListRetrofit(
                 mapOf(
-                    "page" to "1",
+                    "page" to page,
                     "api_key" to API_KEY,
                     "sort_by" to "popularity.desc",
                     "language" to "ko"
@@ -18,7 +19,7 @@ class MovieManager {
             ).execute()
 
             if (response.isSuccessful) {
-                val movieList = response.body()?.results?.map {
+                val movieListResults = response.body()?.results?.map {
                     Movie(
                         it.vote_count,
                         it.vote_average,
@@ -28,7 +29,10 @@ class MovieManager {
                         it.overview
                     )
                 }
-                if (movieList != null) {
+                if (movieListResults != null) {
+                    val responsePage = response.body()?.page?.plus(1)
+                    val movieList = MovieList(responsePage, movieListResults)
+
                     subscriber.onNext(movieList)
                 }
                 subscriber.onComplete()
