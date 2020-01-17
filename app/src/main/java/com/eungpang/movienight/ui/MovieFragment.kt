@@ -10,6 +10,7 @@ import com.eungpang.movienight.R
 import com.eungpang.movienight.entity.MovieList
 import com.eungpang.movienight.ui.adapter.MovieAdapter
 import com.eungpang.movienight.ui.adapter.ViewSelectedListener
+import com.eungpang.movienight.utils.androidLazy
 import com.eungpang.movienight.utils.inflate
 import com.eungpang.movienight.utils.snackbar
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -24,6 +25,21 @@ class MovieFragment : RxBaseFragment() {
     private val movieManager by lazy { MovieManager() }
     private var movieList : MovieList? = null
 
+    private val movieAdapter by androidLazy {
+        MovieAdapter(movieSelectedListener)
+    }
+
+    private val movieSelectedListener = object: ViewSelectedListener {
+        override fun onItemSelected(url: String?) {
+            if (url.isNullOrEmpty()) {
+                recyclerView.snackbar("No URL assigned to this results")
+            } else {
+                val intent = Intent(Intent.ACTION_VIEW)
+                intent.data = Uri.parse(url)
+                startActivity(intent)
+            }
+        }
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?)
             = container?.inflate(R.layout.fragment_movie)
@@ -45,23 +61,28 @@ class MovieFragment : RxBaseFragment() {
                 return@apply
             }
 
-            adapter = MovieAdapter(object: ViewSelectedListener {
-                override fun onItemSelected(url: String?) {
-                    if (url.isNullOrEmpty()) {
-                        recyclerView.snackbar("No URL assigned to this results")
-                    } else {
-                        val intent = Intent(Intent.ACTION_VIEW)
-                        intent.data = Uri.parse(url)
-                        startActivity(intent)
-                    }
-                }
-            })
+            adapter = movieAdapter
         }
 
+        // First launch
         if (savedInstanceState == null) {
             requestMovie()
-        } else {
+            return
+        }
 
+        // If there is a saved data.
+        if (savedInstanceState.containsKey(INTENT_KEY_MOVIE_DATA)) {
+            movieList = savedInstanceState.get(INTENT_KEY_MOVIE_DATA) as MovieList
+            movieAdapter.clearAndAddMovieList(movieList!!.results)
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        val movies = movieAdapter.getMovieList()
+        if (movies.isNotEmpty() && movieList != null) {
+            outState.putParcelable(INTENT_KEY_MOVIE_DATA, movieList?.copy(results = movies))
         }
     }
 
@@ -85,5 +106,9 @@ class MovieFragment : RxBaseFragment() {
     companion object {
         @JvmStatic
         fun newInstance() = MovieFragment()
+
+        const val INTENT_KEY_MOVIE_DATA = "INTENT_KEY_MOVIE_DATA"
+
+
     }
 }

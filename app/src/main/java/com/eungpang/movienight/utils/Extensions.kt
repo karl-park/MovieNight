@@ -31,3 +31,6 @@ fun ImageView.loadingImg(imageUrl: String) {
 fun RecyclerView.snackbar(message: String, duration: Int = Snackbar.LENGTH_SHORT) {
     Snackbar.make(this, message, duration).show()
 }
+
+fun <T> androidLazy(initializer: () -> T) : Lazy<T> =
+    lazy(LazyThreadSafetyMode.NONE, initializer)
